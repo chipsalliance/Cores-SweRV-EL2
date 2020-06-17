@@ -49,21 +49,27 @@ filesets:
       - design/el2_swerv_wrapper.sv
     file_type : systemVerilogSource
 
+  verilator_waiver: {files: [tools/verilator_waiver.vlt : {file_type : systemVerilogSource}]}
+
   vivado_tcl: {files: [tools/vivado.tcl : {file_type : tclSource}]}
 
 targets:
-  default:
+  default: &default
     filesets :
+      # Waivers must be first, because the must be in the compilation unit
+      - "tool_verilator ? (verilator_waiver)"
       - rtl
       - "tool_vivado ? (vivado_tcl)"
   lint:
+    <<: *default
     default_tool: verilator
-    filesets : [rtl]
     generate : [swerv_default_config]
     tools:
       verilator :
         mode : lint-only
-    toplevel : swerv_wrapper
+        verilator_options:
+          - "-Wall"
+    toplevel : el2_swerv_wrapper
 
   synth:
     default_tool : vivado
@@ -74,7 +80,7 @@ targets:
       vivado:
         part : xc7a100tcsg324-1
         pnr  : none
-    toplevel : swerv_wrapper
+    toplevel : el2_swerv_wrapper
 
 generate:
   swerv_default_config:
